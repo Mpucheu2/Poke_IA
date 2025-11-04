@@ -1,0 +1,53 @@
+Zapdos @ Heavy-Duty Boots
+Ability: Pressure
+Level: 50
+Bold Nature
+- Discharge
+- Hurricane
+- Roost
+- Defog
+
+Golem @ Custap Berry
+Ability: Sturdy
+Level: 50
+Adamant Nature
+- Stone Edge
+- Earthquake
+- Sucker Punch
+- Explosion
+
+Dusknoir @ Leftovers
+Ability: Pressure
+Level: 50
+Impish Nature
+- Poltergeist
+- Shadow Sneak
+- Earthquake
+- Will-O-Wisp
+
+Ferrothorn @ Leftovers
+Ability: Iron Barbs
+Level: 50
+Impish Nature
+- Gyro Ball
+- Power Whip
+- Leech Seed
+- Spikes
+
+Arcanine @ Heavy-Duty Boots
+Ability: Intimidate
+Level: 50
+Timid Nature
+- Flamethrower
+- Will-O-Wisp
+- Morning Sun
+- Teleport
+
+Toxapex @ Black Sludge
+Ability: Regenerator
+Level: 50
+Bold Nature
+- Scald
+- Knock Off
+- Recover
+- Toxic

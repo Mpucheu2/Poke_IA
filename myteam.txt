@@ -1,0 +1,53 @@
+Charizard @ Heavy-Duty Boots
+Ability: Blaze
+Level: 50
+Timid Nature
+- Flamethrower
+- Air Slash
+- Focus Blast
+- Roost
+
+Magnezone @ Choice Specs
+Ability: Magnet Pull
+Level: 50
+Modest Nature
+- Thunderbolt
+- Flash Cannon
+- Volt Switch
+- Tri Attack
+
+Swampert @ Leftovers
+Ability: Torrent
+Level: 50
+Impish Nature
+- Earthquake
+- Waterfall
+- Ice Punch
+- Stealth Rock
+
+Gengar @ Life Orb
+Ability: Cursed Body
+Level: 50
+Timid Nature
+- Shadow Ball
+- Sludge Bomb
+- Focus Blast
+- Nasty Plot
+
+Landorus-Therian @ Choice Scarf
+Ability: Intimidate
+Level: 50
+Jolly Nature
+- Earthquake
+- Stone Edge
+- U-turn
+- Knock Off
+
+Snorlax @ Leftovers
+Ability: Thick Fat
+Level: 50
+Impish Nature
+- Body Slam
+- Curse
+- Rest
+- Sleep Talk
