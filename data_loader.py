@@ -1,123 +1,81 @@
+"""Load Pokemon data (species, moves, items, abilities, natures) from data/.
+
+The JSON files were exported from the Run & Bun damage calculator (see the
+`calc` submodule). Each file is loaded once, on first use, then cached.
+"""
 import json
 import os
 
-# --- Définition du chemin absolu ---
-# Cela garantit que "data_from_calc/" est trouvé, peu importe d'où vous lancez le script
-try:
-    _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-except NameError:
-    _SCRIPT_DIR = os.path.abspath(os.getcwd())
-DATA_PATH = os.path.join(_SCRIPT_DIR, "data_from_calc/")
+DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+_caches = {}
 
 
 def load_json(filename):
-    """Charge un fichier JSON depuis le dossier data."""
+    """Load a JSON file from the data folder, or return None on error."""
     filepath = os.path.join(DATA_PATH, filename)
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
-        print(f"ERREUR CRITIQUE: Fichier JSON introuvable : {filepath}")
-        return None
+        print(f"ERROR: JSON file not found: {filepath}")
     except json.JSONDecodeError:
-        print(f"ERREUR CRITIQUE: Fichier JSON mal formé : {filepath}")
-        return None
+        print(f"ERROR: malformed JSON file: {filepath}")
+    return None
 
-# --- Initialisation des Caches ---
-_species_cache = None
-_moves_cache = None
-_items_cache = None
-_abilities_cache = None
-_natures_cache = None
 
-# --- Helper pour convertir les listes JSON en Dictionnaires ---
-def _normalize_json_data(raw_data):
-    """Convertit les listes de dicts JSON en un seul dict pour une recherche rapide."""
-    data_dict = {}
+def _clean_key(name):
+    """Normalise a name so that "King's Rock", "kings-rock" and "Kings Rock" match."""
+    for char in "- %:'":
+        name = name.replace(char, "")
+    return name.lower()
+
+
+def _merge(raw_data):
+    """The calc exports a list of dicts (one per generation); merge them, later ones win."""
+    merged = {}
     if isinstance(raw_data, list):
         for item in raw_data:
             if isinstance(item, dict):
-                data_dict.update(item)
+                merged.update(item)
     elif isinstance(raw_data, dict):
-        data_dict = raw_data
-    
-    # Nettoie les clés
-    normalized_dict = {}
-    for key, value in data_dict.items():
-        clean_key = key.lower().replace('-', '').replace(' ', '').replace('%', '').replace(':', '').replace("'", "")
-        normalized_dict[clean_key] = value
-    return normalized_dict
+        merged = raw_data
+    return merged
 
-# --- Fonctions de chargement corrigées ---
+
+def _table(filename):
+    """Return the cached {clean_name: data} table for a JSON file."""
+    if filename not in _caches:
+        raw = load_json(filename)
+        if raw is None:
+            return None
+        _caches[filename] = {_clean_key(key): value for key, value in _merge(raw).items()}
+    return _caches[filename]
+
+
+def _lookup(filename, name):
+    table = _table(filename)
+    if table is None or not name:
+        return None
+    return table.get(_clean_key(name))
+
 
 def get_species(name: str):
-    """Charge les espèces depuis species.json et les met en cache."""
-    global _species_cache
-    if _species_cache is None:
-        raw = load_json("species.json")
-        if raw is None: return None
-        _species_cache = _normalize_json_data(raw)
+    return _lookup("species.json", name)
 
-    clean_name = name.lower().replace('-', '').replace(' ', '').replace('%', '').replace(':', '').replace("'", "")
-    
-    if clean_name in _species_cache:
-        return _species_cache[clean_name]
-    
-    for key, value in _species_cache.items():
-        if value.get('name', '').lower() == name.lower():
-            return value
-    return None
 
 def get_move(name: str):
-    """Charge une attaque depuis moves.json et la met en cache."""
-    global _moves_cache
-    if _moves_cache is None:
-        raw = load_json("moves.json")
-        if raw is None: return None
-        _moves_cache = _normalize_json_data(raw)
+    return _lookup("moves.json", name)
 
-    clean_name = name.lower().replace('-', '').replace(' ', '')
-    return _moves_cache.get(clean_name)
 
 def get_item(name: str):
-    """Charge un objet depuis items.json et la met en cache."""
-    global _items_cache
-    if _items_cache is None:
-        raw = load_json("items.json")
-        if raw is None: return None
-        _items_cache = _normalize_json_data(raw)
+    return _lookup("items.json", name)
 
-    clean_name = name.lower().replace('-', '').replace(' ', '')
-    return _items_cache.get(clean_name)
 
 def get_ability(name: str):
-    """Charge un talent depuis abilities.json et la met en cache."""
-    global _abilities_cache
-    if _abilities_cache is None:
-        raw = load_json("abilities.json")
-        if raw is None: return None
-        _abilities_cache = _normalize_json_data(raw)
+    return _lookup("abilities.json", name)
 
-    clean_name = name.lower().replace('-', '').replace(' ', '')
-    return _abilities_cache.get(clean_name)
 
 def get_nature_data(name: str):
-    """Charge les natures depuis natures.json et la met en cache."""
-    global _natures_cache
-    if _natures_cache is None:
-        raw = load_json("natures.json")
-        if raw is None: return None
-        
-        _natures_cache = {}
-        data_dict = {}
-        if isinstance(raw, list):
-            for item in raw:
-                if isinstance(item, dict):
-                    data_dict.update(item)
-        elif isinstance(raw, dict):
-            data_dict = raw
-        
-        for key, value in data_dict.items():
-            _natures_cache[key.lower()] = value
-
-    return _natures_cache.get(name.lower())
+    """Return [boosted_stat, lowered_stat] for a nature, e.g. ["atk", "spa"] for Adamant."""
+    return _lookup("natures.json", name)

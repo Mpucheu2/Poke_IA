@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Training outputs (TensorBoard logs, monitor files, saved models)
+rl_logs/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

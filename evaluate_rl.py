@@ -1,37 +1,47 @@
+"""Watch a trained agent fight, turn by turn, and report its win rate.
+
+Usage: python evaluate_rl.py [--episodes N] [--fast]
+"""
+import argparse
+import os
 import time
-from sb3_contrib import MaskablePPO as PPO
-from pokemon_env import *
 
-# 1. Charger l'environnement
-# Mettre render_mode="human" pour voir le déroulement dans la console
-env = PokemonEnv(team1_file="myteam.txt", team2_file="oppteam.txt", render_mode="human")
+from sb3_contrib import MaskablePPO
 
-# 2. Charger le modèle entraîné
-# Assure-toi que le chemin correspond à celui où le modèle a été sauvegardé
-model_path = "./rl_logs/ppo_pokemon_agent"
-model = PPO.load(model_path, env=env)
+from pokemon_env import PokemonEnv
+from train_rl import DEFAULT_OPPONENT, DEFAULT_TEAM, MODEL_PATH
 
-# 3. Lancer des combats d'évaluation
-num_episodes = 5 # Nombre de combats à regarder
-for episode in range(num_episodes):
-    print(f"\n--- Combat d'évaluation #{episode+1} ---")
-    obs, info = env.reset()
-    terminated, truncated = False, False
-    total_reward = 0
-    turn_count = 0
-    while not terminated and not truncated:
-        turn_count += 1
-        print(f"\n--- Tour {turn_count} ---")
-        # deterministic=True : l'IA choisit la meilleure action qu'elle connaît
-        action, _states = model.predict(obs, deterministic=True)
-        obs, reward, terminated, truncated, info = env.step(action)
-        env.render() # Affiche l'état après l'action
-        total_reward += reward
-        time.sleep(0.5) # Pause pour pouvoir lire les logs
-        # input("Appuyez sur Entrée pour le tour suivant...") # Décommente pour avancer pas à pas
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--model", default=MODEL_PATH, help="Path to the trained model")
+    parser.add_argument("--team", default=DEFAULT_TEAM)
+    parser.add_argument("--opponent", default=DEFAULT_OPPONENT)
+    parser.add_argument("--episodes", type=int, default=5)
+    parser.add_argument("--fast", action="store_true", help="No battle log, no pauses: just the win rate")
+    args = parser.parse_args()
 
-    winner = "Agent RL (Équipe 1)" if total_reward > 0 else "RunAndBunAI (Équipe 2) ou Nul" # Approximation basée sur la récompense
-    print(f"Fin du combat #{episode+1}. Récompense totale: {total_reward:.2f}. Vainqueur (estimé): {winner}")
-    time.sleep(2) # Pause avant le prochain combat
+    env = PokemonEnv(args.team, args.opponent, render_mode=None if args.fast else "human")
+    model = MaskablePPO.load(args.model, env=env)
 
-env.close()
+    wins = 0
+    for episode in range(1, args.episodes + 1):
+        obs, info = env.reset()
+        done, total_reward = False, 0.0
+        while not done:
+            # deterministic=True: always pick the action the agent rates best
+            action, _ = model.predict(obs, action_masks=env.action_masks(), deterministic=True)
+            obs, reward, terminated, truncated, info = env.step(action)
+            total_reward += reward
+            done = terminated or truncated
+            if not args.fast:
+                print(f"\n--- Battle {episode}, turn {info['turn']} ---")
+                env.render()
+                time.sleep(0.5)
+
+        won = info.get("winner") == 1
+        wins += won
+        result = "win" if won else ("timeout" if truncated else "loss")
+        print(f"Battle {episode}: {result}, total reward {total_reward:.2f}")
+
+    print(f"\nAgent win rate: {wins}/{args.episodes} ({100 * wins / args.episodes:.0f}%)")
+    env.close()
